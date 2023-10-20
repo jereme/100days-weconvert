@@ -9,22 +9,22 @@ import Foundation
 
 struct Converter {
   let measurementType: MeasurementType
-  let fromUnit: UnitOfMeasurement
+  let fromDimension: Dimension
   let value: Double
 
-  init?(measurementType: MeasurementType, fromUnit: UnitOfMeasurement, value: Double) {
-    guard measurementType.unitsOfMeasurement.contains(fromUnit) else { return nil }
+  init?(measurementType: MeasurementType, from fromDimension: Dimension, value: Double) {
+    guard measurementType.dimensions.contains(fromDimension) else { return nil }
 
     self.measurementType = measurementType
-    self.fromUnit = fromUnit
+    self.fromDimension = fromDimension
     self.value = value
   }
 
-  func convert(to toUnit: UnitOfMeasurement) -> Double {
-    guard measurementType.unitsOfMeasurement.contains(toUnit) else { return 0 }
+  func convert(to toDimension: Dimension) -> Double {
+    guard measurementType.dimensions.contains(toDimension) else { return 0 }
 
-    let measurement = Measurement(value: value, unit: fromUnit.dimension)
-    return measurement.converted(to: toUnit.dimension).value
+    let measurement = Measurement(value: value, unit: fromDimension)
+    return measurement.converted(to: toDimension).value
   }
 }
 
@@ -36,63 +36,48 @@ enum MeasurementType: String, CaseIterable, Identifiable {
   case time
   case volume
 
-  var unitsOfMeasurement: [UnitOfMeasurement] {
+  var dimensions: [Dimension] {
     switch self {
     case .temperature:
-      return [.celsius, .fahrenheit, .kelvin]
+      return [UnitTemperature.celsius, UnitTemperature.fahrenheit, UnitTemperature.kelvin]
     case .distance:
-      return [.meters, .kilometers, .feet, .yards, .miles]
+      return [UnitLength.meters, UnitLength.kilometers, UnitLength.feet, UnitLength.yards, UnitLength.miles]
     case .time:
-      return [.seconds, .minutes, .hours, .days]
+      return [UnitDuration.seconds, UnitDuration.minutes, UnitDuration.hours, UnitDuration.days]
     case .volume:
-      return [.milliliters, .liters, .cups, .pints, .gallons]
+      return [UnitVolume.milliliters, UnitVolume.liters, UnitVolume.cups, UnitVolume.pints, UnitVolume.gallons]
+    }
+  }
+
+  var defaultFromDimension: Dimension {
+    switch self {
+    case .temperature:
+      return UnitTemperature.fahrenheit
+    case .distance:
+      return UnitLength.miles
+    case .time:
+      return UnitDuration.seconds
+    case .volume:
+      return UnitVolume.milliliters
+    }
+  }
+
+  var defaultToDimension: Dimension {
+    switch self {
+    case .temperature:
+      return UnitTemperature.celsius
+    case .distance:
+      return UnitLength.kilometers
+    case .time:
+      return UnitDuration.days
+    case .volume:
+      return UnitVolume.cups
     }
   }
 }
 
-enum UnitOfMeasurement: String, Identifiable {
-  var id: String { rawValue }
-
-  case meters
-  case kilometers
-  case feet
-  case yards
-  case miles
-  case celsius
-  case fahrenheit
-  case kelvin
-  case seconds
-  case minutes
-  case hours
-  case days
-  case milliliters
-  case liters
-  case cups
-  case pints
-  case gallons
-
-  var dimension: Dimension {
-    switch self {
-
-    case .meters:       return UnitLength.meters
-    case .kilometers:   return UnitLength.kilometers
-    case .feet:         return UnitLength.feet
-    case .yards:        return UnitLength.yards
-    case .miles:        return UnitLength.miles
-    case .celsius:      return UnitTemperature.celsius
-    case .fahrenheit:   return UnitTemperature.fahrenheit
-    case .kelvin:       return UnitTemperature.kelvin
-    case .seconds:      return UnitDuration.seconds
-    case .minutes:      return UnitDuration.minutes
-    case .hours:        return UnitDuration.hours
-    case .days:         return UnitDuration.days
-    case .milliliters:  return UnitVolume.milliliters
-    case .liters:       return UnitVolume.liters
-    case .cups:         return UnitVolume.cups
-    case .pints:        return UnitVolume.pints
-    case .gallons:      return UnitVolume.gallons
-    }
-  }
+extension Dimension: Identifiable {
+  public var id: String { symbol }
 }
 
 extension UnitDuration {

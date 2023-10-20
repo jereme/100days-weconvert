@@ -11,15 +11,11 @@ import SwiftUI
 struct ConverterView: View {
   @State private var measurementType: MeasurementType = .distance
   @State private var inputValue: Double = 0.0
-  @State private var fromUnitOfMeasurement: UnitOfMeasurement?
-  @State private var toUnitOfMeasurement: UnitOfMeasurement?
+  @State private var fromUnit: Dimension = MeasurementType.distance.defaultFromDimension
+  @State private var toUnit: Dimension = MeasurementType.distance.defaultToDimension
 
   private var result: Double {
-    guard
-      let fromUnit = fromUnitOfMeasurement,
-      let toUnit = toUnitOfMeasurement,
-      let converter = Converter(measurementType: measurementType, fromUnit: fromUnit, value: inputValue)
-    else { return 0 }
+    guard let converter = Converter(measurementType: measurementType, from: fromUnit, value: inputValue) else { return 0 }
 
     return converter.convert(to: toUnit)
   }
@@ -34,22 +30,26 @@ struct ConverterView: View {
                 .tag($0)
             }
           }
+          .onChange(of: measurementType) { newValue in
+            fromUnit = newValue.defaultFromDimension
+            toUnit = newValue.defaultToDimension
+          }
         }
         Section("From") {
-          Picker("From", selection: $fromUnitOfMeasurement) {
-            ForEach(measurementType.unitsOfMeasurement) {
-              Text($0.rawValue.capitalized)
-                .tag(Optional($0))
+          Picker("From", selection: $fromUnit) {
+            ForEach(measurementType.dimensions) {
+              Text($0.symbol)
+                .tag($0)
             }
           }
           .pickerStyle(.segmented)
           TextField("Value", value: $inputValue, format: .number)
         }
         Section("To") {
-          Picker("To", selection: $toUnitOfMeasurement) {
-            ForEach(measurementType.unitsOfMeasurement) {
-              Text($0.rawValue.capitalized)
-                .tag(Optional($0))
+          Picker("To", selection: $toUnit) {
+            ForEach(measurementType.dimensions) {
+              Text($0.symbol)
+                .tag($0)
             }
           }
           .pickerStyle(.segmented)
